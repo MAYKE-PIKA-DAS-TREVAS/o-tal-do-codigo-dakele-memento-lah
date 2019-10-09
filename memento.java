@@ -1,56 +1,57 @@
-// The originator holds some important data that may change over
-// time. It also defines a method for saving its state inside a
-// memento and another method for restoring the state from it.
-class Editor is
-    private field text, curX, curY, selectionWidth
+class Memento {
+    private String state;
 
-    method setText(text) is
-        this.text = text
+    public Memento(String state) {
+        this.state = state;
+    }
 
-    method setCursor(x, y) is
-        this.curX = curX
-        this.curY = curY
+    public String getState() {
+        return state;
+    }
+}
 
-    method setSelectionWidth(width) is
-        this.selectionWidth = width
+class Originator {
+    private String state;
+   /* lots of memory consumptive private data that is not necessary to define the
+    * state and should thus not be saved. Hence the small memento object. */
 
-    // Saves the current state inside a memento.
-    method createSnapshot():Snapshot is
-        // Memento is an immutable object; that's why the
-        // originator passes its state to the memento's
-        // constructor parameters.
-        return new Snapshot(this, text, curX, curY, selectionWidth)
+    public void setState(String state) {
+        System.out.println("Originator: Setting state to " + state);
+        this.state = state;
+    }
 
-// The memento class stores the past state of the editor.
-class Snapshot is
-    private field editor: Editor
-    private field text, curX, curY, selectionWidth
+    public Memento save() {
+        System.out.println("Originator: Saving to Memento.");
+        return new Memento(state);
+    }
+    public void restore(Memento m) {
+        state = m.getState();
+        System.out.println("Originator: State after restoring from Memento: " + state);
+    }
+}
 
-    constructor Snapshot(editor, text, curX, curY, selectionWidth) is
-        this.editor = editor
-        this.text = text
-        this.curX = curX
-        this.curY = curY
-        this.selectionWidth = selectionWidth
+class Caretaker {
+    private ArrayList<Memento> mementos = new ArrayList<>();
 
-    // At some point, a previous state of the editor can be
-    // restored using a memento object.
-    method restore() is
-        editor.setText(text)
-        editor.setCursor(curX, curY)
-        editor.setSelectionWidth(selectionWidth)
+    public void addMemento(Memento m) {
+        mementos.add(m);
+    }
 
-// A command object can act as a caretaker. In that case, the
-// command gets a memento just before it changes the
-// originator's state. When undo is requested, it restores the
-// originator's state from a memento.
-class Command is
-    private field backup: Snapshot
+    public Memento getMemento() {
+        return mementos.get(1);
+    }
+}
 
-    method makeBackup() is
-        backup = editor.createSnapshot()
-
-    method undo() is
-        if (backup != null)
-            backup.restore()
-    // ...
+public class MementoDemo {
+    public static void main(String[] args) {
+        Caretaker caretaker = new Caretaker();
+        Originator originator = new Originator();
+        originator.setState("State1");
+        originator.setState("State2");
+        caretaker.addMemento( originator.save() );
+        originator.setState("State3");
+        caretaker.addMemento( originator.save() );
+        originator.setState("State4");
+        originator.restore( caretaker.getMemento() );
+    }
+}
